@@ -1,0 +1,99 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>在庫管理 QR読み取りテスト</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 20px;
+      background: #f5f6f8;
+    }
+    h2 { font-size: 20px; }
+    button {
+      width: 100%;
+      padding: 14px;
+      margin: 8px 0;
+      font-size: 16px;
+      color: white;
+      background: #1769aa;
+      border: 0;
+      border-radius: 6px;
+    }
+    #reader {
+      width: 100%;
+      max-width: 480px;
+      margin: 16px auto;
+    }
+    #result {
+      overflow-wrap: anywhere;
+      background: white;
+      padding: 12px;
+      min-height: 50px;
+    }
+  </style>
+</head>
+<body>
+  <h2>QRコード読み取りテスト</h2>
+  <button onclick="startScan()">カメラを起動</button>
+  <div id="reader"></div>
+  <button onclick="stopScan()">読み取りを終了</button>
+  <h3>読み取り結果</h3>
+  <div id="result">まだ読み取っていません</div>
+  <button onclick="copyResult()">結果をコピー</button>
+
+  <script>
+    let scanner = null;
+    let scannedText = '';
+
+    async function startScan() {
+      try {
+        if (typeof Html5Qrcode === 'undefined') {
+          throw new Error('読み取りライブラリを読み込めません');
+        }
+
+        scanner = new Html5Qrcode('reader');
+        await scanner.start(
+          { facingMode: 'environment' },
+          { fps: 10, qrbox: { width: 250, height: 250 } },
+          async (text) => {
+            scannedText = text;
+            document.getElementById('result').textContent = text;
+            await stopScan();
+          },
+          () => {}
+        );
+      } catch (error) {
+        document.getElementById('result').textContent =
+          'カメラ起動エラー：' + error;
+      }
+    }
+
+    async function stopScan() {
+      if (scanner) {
+        try {
+          if (scanner.isScanning) await scanner.stop();
+          scanner.clear();
+        } catch (error) {}
+        scanner = null;
+      }
+    }
+
+    async function copyResult() {
+      if (!scannedText) {
+        alert('まだQRコードを読み取っていません');
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(scannedText);
+        alert('コピーしました');
+      } catch (error) {
+        alert('コピーできませんでした。結果を長押ししてコピーしてください');
+      }
+    }
+  </script>
+</body>
+</html>
