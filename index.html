@@ -59,11 +59,35 @@
         await scanner.start(
           { facingMode: 'environment' },
           { fps: 10, qrbox: { width: 250, height: 250 } },
-          async (text) => {
-            scannedText = text;
-            document.getElementById('result').textContent = text;
-            await stopScan();
-          },
+async (text) => {
+  scannedText = text;
+  document.getElementById('result').textContent = text;
+
+  await stopScan();
+
+  const params = new URLSearchParams(window.location.search);
+  const slot = Number(params.get('slot'));
+
+  if (
+    window.opener &&
+    !window.opener.closed &&
+    slot >= 1 &&
+    slot <= 5
+  ) {
+    window.opener.postMessage({
+      type: 'INVENTORY_QR_SCANNED',
+      slot: slot,
+      code: text
+    }, '*');
+
+    document.getElementById('result').textContent =
+      '読み取り成功。入力画面に戻ります。';
+
+    setTimeout(function() {
+      window.close();
+    }, 700);
+  }
+},
           () => {}
         );
       } catch (error) {
